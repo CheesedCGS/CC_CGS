@@ -6,120 +6,271 @@
     <title>🧀 Сырный кликер</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <!-- Шапка в стиле Telegram -->
-        <div class="header">
-            <h1>🧀 Сырный кликер</h1>
-            <p class="subtitle">Кликай, зарабатывай, покупай улучшения</p>
-        </div>
-
-        <!-- Основная игровая зона -->
-        <div class="game-area">
-            <!-- Сыр для кликов -->
-            <div class="cheese" id="cheese">
-                <div class="cheese-text">
-                    <span>КЛИКНИ</span>
-                    <div class="power" id="currentPower">+1</div>
-                </div>
-                <div class="cheese-hole"></div>
-                <div class="cheese-hole hole2"></div>
-                <div class="cheese-hole hole3"></div>
-            </div>
-
-            <!-- Статистика -->
-            <div class="stats">
-                <div class="stat">
-                    <span>🧀 Сырки:</span>
-                    <strong id="cheeseCount">0</strong>
-                </div>
-                <div class="stat">
-                    <span>⚡ Сила:</span>
-                    <strong id="clickPower">1</strong>
-                </div>
-                <div class="stat">
-                    <span>📊 Уровень:</span>
-                    <strong id="level">1</strong>
+    <!-- Главный контейнер -->
+    <div class="app-container">
+        <!-- Шапка приложения -->
+        <header class="app-header">
+            <div class="header-top">
+                <h1><i class="fas fa-cheese"></i> Сырный кликер</h1>
+                <div class="user-info">
+                    <span id="username">Игрок</span>
+                    <div class="level-badge" id="userLevel">Ур. 1</div>
                 </div>
             </div>
-
-            <!-- Улучшения -->
-            <div class="upgrades">
-                <button class="upgrade-btn" onclick="buyUpgrade('power')">
-                    <span class="btn-icon">⚡</span>
-                    <span class="btn-text">
-                        <strong>Улучшить силу</strong>
-                        <small>+1 к клику</small>
-                    </span>
-                    <span class="btn-price" id="powerPrice">10 сырков</span>
+            
+            <!-- Основные вкладки -->
+            <nav class="tabs">
+                <button class="tab-btn active" data-tab="game">
+                    <i class="fas fa-gamepad"></i> Игра
                 </button>
-
-                <button class="upgrade-btn" onclick="buyUpgrade('multiplier')">
-                    <span class="btn-icon">✖️</span>
-                    <span class="btn-text">
-                        <strong>Множитель x2</strong>
-                        <small>2x за клик</small>
-                    </span>
-                    <span class="btn-price" id="multiplierPrice">500 сырков</span>
+                <button class="tab-btn" data-tab="shop">
+                    <i class="fas fa-store"></i> Магазин
                 </button>
-
-                <button class="upgrade-btn" onclick="buyUpgrade('autoclicker')">
-                    <span class="btn-icon">🤖</span>
-                    <span class="btn-text">
-                        <strong>Автокликер</strong>
-                        <small>+5/сек</small>
-                    </span>
-                    <span class="btn-price" id="autoclickerPrice">1000 сырков</span>
+                <button class="tab-btn" data-tab="top">
+                    <i class="fas fa-trophy"></i> Топ
                 </button>
-            </div>
+                <button class="tab-btn" data-tab="transfer">
+                    <i class="fas fa-exchange-alt"></i> Перевод
+                </button>
+            </nav>
+        </header>
 
-            <!-- Магазин префиксов -->
-            <div class="shop">
-                <h3>🏪 Магазин префиксов</h3>
-                <div class="prefixes">
-                    <button class="prefix-btn" onclick="buyPrefix('king')">
-                        [👑] Король - 5000
-                    </button>
-                    <button class="prefix-btn" onclick="buyPrefix('star')">
-                        [⭐] Звезда - 3000
-                    </button>
-                    <button class="prefix-btn" onclick="buyPrefix('fire')">
-                        [🔥] Огненный - 8000
-                    </button>
+        <!-- Контент вкладок -->
+        <main class="tab-content">
+            <!-- ВКЛАДКА ИГРЫ -->
+            <div class="tab-pane active" id="game-tab">
+                <!-- Счетчик сыра -->
+                <div class="cheese-counter">
+                    <div class="counter-label">Ваши сырки:</div>
+                    <div class="counter-value" id="cheeseCount">0</div>
+                    <div class="counter-icon">🧀</div>
+                </div>
+                
+                <!-- Кликабельный сыр -->
+                <div class="cheese-clicker" id="cheeseButton">
+                    <div class="cheese-main">
+                        <div class="cheese-holes">
+                            <div class="hole"></div>
+                            <div class="hole"></div>
+                            <div class="hole"></div>
+                        </div>
+                        <div class="click-text">
+                            <span class="click-label">КЛИКНИ!</span>
+                            <span class="click-power" id="clickPowerText">+1</span>
+                        </div>
+                    </div>
+                    <div class="cheese-shine"></div>
+                </div>
+                
+                <!-- Статистика -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">⚡</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Сила клика</div>
+                            <div class="stat-value" id="clickPower">1</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✖️</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Множитель</div>
+                            <div class="stat-value" id="multiplier">x1</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🤖</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Автокликер</div>
+                            <div class="stat-value" id="autoclicker">0/сек</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Топ игроков -->
-            <div class="top">
-                <h3>🏆 Топ игроков</h3>
-                <div id="topList">
-                    <div class="top-item">1. Ты - 0 🧀</div>
-                    <div class="top-item">2. Игрок2 - 0 🧀</div>
-                    <div class="top-item">3. Игрок3 - 0 🧀</div>
+            <!-- ВКЛАДКА МАГАЗИНА -->
+            <div class="tab-pane" id="shop-tab">
+                <h2 class="tab-title"><i class="fas fa-crown"></i> Префиксы</h2>
+                
+                <div class="shop-items">
+                    <div class="shop-item" data-item="king">
+                        <div class="item-icon">👑</div>
+                        <div class="item-info">
+                            <h3>Королевский</h3>
+                            <p>Золотой префикс в топе</p>
+                        </div>
+                        <button class="buy-btn" data-price="5000">
+                            <span class="price">5000</span>
+                            <span class="currency">🧀</span>
+                        </button>
+                    </div>
+                    
+                    <div class="shop-item" data-item="star">
+                        <div class="item-icon">⭐</div>
+                        <div class="item-info">
+                            <h3>Звездный</h3>
+                            <p>Светящийся префикс</p>
+                        </div>
+                        <button class="buy-btn" data-price="3000">
+                            <span class="price">3000</span>
+                            <span class="currency">🧀</span>
+                        </button>
+                    </div>
+                    
+                    <div class="shop-item" data-item="fire">
+                        <div class="item-icon">🔥</div>
+                        <div class="item-info">
+                            <h3>Огненный</h3>
+                            <p>Горячий префикс</p>
+                        </div>
+                        <button class="buy-btn" data-price="8000">
+                            <span class="price">8000</span>
+                            <span class="currency">🧀</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <h2 class="tab-title"><i class="fas fa-bolt"></i> Улучшения</h2>
+                
+                <div class="upgrades-list">
+                    <div class="upgrade-item">
+                        <div class="upgrade-icon">⚡</div>
+                        <div class="upgrade-details">
+                            <h3>Усиление клика</h3>
+                            <p>+1 к силе за клик</p>
+                            <div class="upgrade-price">Стоимость: <span id="powerPrice">10</span> 🧀</div>
+                        </div>
+                        <button class="upgrade-btn" onclick="buyUpgrade('power')">
+                            Купить
+                        </button>
+                    </div>
+                    
+                    <div class="upgrade-item">
+                        <div class="upgrade-icon">✖️</div>
+                        <div class="upgrade-details">
+                            <h3>Множитель x2</h3>
+                            <p>Удваивает клики</p>
+                            <div class="upgrade-price">Стоимость: <span id="multiplierPrice">500</span> 🧀</div>
+                        </div>
+                        <button class="upgrade-btn" onclick="buyUpgrade('multiplier')">
+                            Купить
+                        </button>
+                    </div>
+                    
+                    <div class="upgrade-item">
+                        <div class="upgrade-icon">🤖</div>
+                        <div class="upgrade-details">
+                            <h3>Автокликер</h3>
+                            <p>+5 сыра в секунду</p>
+                            <div class="upgrade-price">Стоимость: <span id="autoclickerPrice">1000</span> 🧀</div>
+                        </div>
+                        <button class="upgrade-btn" onclick="buyUpgrade('autoclicker')">
+                            Купить
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Перевод сыра -->
-            <div class="transfer">
-                <h3>💸 Перевод сыра</h3>
+            <!-- ВКЛАДКА ТОПА -->
+            <div class="tab-pane" id="top-tab">
+                <h2 class="tab-title"><i class="fas fa-medal"></i> Топ игроков</h2>
+                
+                <div class="top-filters">
+                    <button class="filter-btn active">Неделя</button>
+                    <button class="filter-btn">Месяц</button>
+                    <button class="filter-btn">Все время</button>
+                </div>
+                
+                <div class="top-list">
+                    <div class="top-player gold">
+                        <div class="rank">🥇</div>
+                        <div class="player-info">
+                            <div class="player-name">[👑] Ты</div>
+                            <div class="player-stats">0 сыра • Ур. 1</div>
+                        </div>
+                        <div class="player-score">0 🧀</div>
+                    </div>
+                    
+                    <div class="top-player silver">
+                        <div class="rank">🥈</div>
+                        <div class="player-info">
+                            <div class="player-name">Игрок 2</div>
+                            <div class="player-stats">0 сыра • Ур. 1</div>
+                        </div>
+                        <div class="player-score">0 🧀</div>
+                    </div>
+                    
+                    <div class="top-player bronze">
+                        <div class="rank">🥉</div>
+                        <div class="player-info">
+                            <div class="player-name">Игрок 3</div>
+                            <div class="player-stats">0 сыра • Ур. 1</div>
+                        </div>
+                        <div class="player-score">0 🧀</div>
+                    </div>
+                </div>
+                
+                <div class="your-position">
+                    <div class="position-label">Ваше место:</div>
+                    <div class="position-value">#1</div>
+                </div>
+            </div>
+
+            <!-- ВКЛАДКА ПЕРЕВОДА -->
+            <div class="tab-pane" id="transfer-tab">
+                <h2 class="tab-title"><i class="fas fa-gift"></i> Перевод сыра</h2>
+                
                 <div class="transfer-form">
-                    <input type="number" id="transferAmount" placeholder="Сколько" min="1" value="100">
-                    <input type="text" id="transferUser" placeholder="ID игрока">
-                    <button onclick="transferCheese()">Отправить</button>
+                    <div class="input-group">
+                        <label for="transferAmount">Сколько перевести:</label>
+                        <div class="amount-input">
+                            <input type="number" id="transferAmount" value="100" min="1">
+                            <span class="input-icon">🧀</span>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="transferUser">ID получателя:</label>
+                        <input type="text" id="transferUser" placeholder="Например: 123456789">
+                    </div>
+                    
+                    <div class="transfer-info">
+                        <div class="info-line">
+                            <span>У вас есть:</span>
+                            <span id="availableCheese">0 🧀</span>
+                        </div>
+                        <div class="info-line">
+                            <span>Комиссия:</span>
+                            <span>0%</span>
+                        </div>
+                    </div>
+                    
+                    <button class="transfer-btn" onclick="transferCheese()">
+                        <i class="fas fa-paper-plane"></i> Отправить перевод
+                    </button>
+                </div>
+                
+                <div class="recent-transfers">
+                    <h3><i class="fas fa-history"></i> Последние переводы</h3>
+                    <div class="transfers-list">
+                        <div class="transfer-item">
+                            <div class="transfer-direction">← Получено</div>
+                            <div class="transfer-details">
+                                <div class="transfer-from">От: Игрок 2</div>
+                                <div class="transfer-amount">+50 🧀</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </main>
 
-        <!-- Футер -->
-        <div class="footer">
-            <p>Наш чат: <a href="https://t.me/" target="_blank">@cheeseclickerchat</a></p>
-            <p>Обновлено: <span id="updateTime">сегодня</span></p>
-        </div>
+        <!-- Уведомления -->
+        <div class="notification" id="notification"></div>
     </div>
-
-    <!-- Уведомления -->
-    <div class="notification" id="notification"></div>
 
     <script src="script.js"></script>
 </body>

@@ -6,16 +6,15 @@ Telegram.WebApp.expand();
 let gameState = {
     cheese: 0,
     clickPower: 1,
-    level: 1,
     multiplier: 1,
     multiplierLevel: 0,
     autoclickerLevel: 0,
+    level: 1,
     prefix: '',
-    userId: null,
     username: 'Игрок'
 };
 
-// Цены
+// Цены (будут расти)
 let prices = {
     power: 10,
     multiplier: 500,
@@ -25,63 +24,137 @@ let prices = {
     fire: 8000
 };
 
-// Получаем данные пользователя Telegram
-function initUser() {
+// Инициализация
+function init() {
+    // Получаем данные пользователя Telegram
     if (Telegram.WebApp.initDataUnsafe.user) {
         const user = Telegram.WebApp.initDataUnsafe.user;
-        gameState.userId = user.id;
         gameState.username = user.first_name || 'Игрок';
-        
-        // Загружаем сохраненную игру
-        loadGame();
-    } else {
-        // Для теста
-        gameState.userId = Date.now();
-        loadGame();
+        document.getElementById('username').textContent = gameState.username;
     }
+    
+    // Загружаем сохраненную игру
+    loadGame();
+    
+    // Инициализируем вкладки
+    initTabs();
+    
+    // Запускаем автокликер
+    startAutoclicker();
+    
+    // Обновляем интерфейс
+    updateUI();
 }
 
-// Загрузка игры
-function loadGame() {
-    const saved = localStorage.getItem('cheeseGame_' + gameState.userId);
-    if (saved) {
-        const data = JSON.parse(saved);
-        Object.assign(gameState, data);
-        updateUI();
-    }
+// ВКЛАДКИ
+function initTabs() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Убираем активный класс у всех кнопок
+            tabBtns.forEach(b => b.classList.remove('active'));
+            // Добавляем активный класс текущей кнопке
+            this.classList.add('active');
+            
+            // Получаем ID вкладки
+            const tabId = this.getAttribute('data-tab');
+            
+            // Скрываем все вкладки
+            tabPanes.forEach(pane => {
+                pane.classList.remove('active');
+            });
+            
+            // Показываем нужную вкладку
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+            
+            // Анимация перехода
+            document.getElementById(`${tabId}-tab`).style.animation = 'none';
+            setTimeout(() => {
+                document.getElementById(`${tabId}-tab`).style.animation = 'fadeInUp 0.4s ease';
+            }, 10);
+        });
+    });
 }
 
-// Сохранение игры
-function saveGame() {
-    localStorage.setItem('cheeseGame_' + gameState.userId, JSON.stringify(gameState));
-}
-
-// Клик по сыру
-document.getElementById('cheese').addEventListener('click', function() {
-    // Анимация
+// КЛИК ПО СЫРУ
+document.getElementById('cheeseButton').addEventListener('click', function() {
+    // Анимация нажатия
     this.style.transform = 'scale(0.95)';
     setTimeout(() => {
         this.style.transform = 'scale(1)';
     }, 100);
     
-    // Начисление
+    // Эффект частиц
+    createParticles(this);
+    
+    // Начисление сыра
     const earned = gameState.clickPower * gameState.multiplier;
     gameState.cheese += earned;
     
-    // Показываем всплывающий текст
-    showFloatingText('+' + earned, this);
-    
-    // Обновляем
-    updateUI();
-    saveGame();
+    // Всплывающий текст
+    showFloatingText(`+${earned}`, this);
     
     // Тактильная отдача
     if (Telegram.WebApp.HapticFeedback) {
         Telegram.WebApp.HapticFeedback.impactOccurred('light');
     }
+    
+    // Обновление
+    updateUI();
+    saveGame();
 });
 
-// Покупка улучшения
+// ЭФФЕКТ ЧАСТИЦ
+function createParticles(element) {
+    const rect = element.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    for (let i = 0; i < 8; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'cheese-particle';
+        particle.textContent = '🧀';
+        particle.style.cssText = `
+            position: fixed;
+            left: ${centerX}px;
+            top: ${centerY}px;
+            font-size: 20px;
+            pointer-events: none;
+            z-index: 1000;
+            animation: particleFly ${Math.random() * 0.5 + 0.5}s ease-out forwards;
+        `;
+        
+        document.body.appendChild(particle);
+        
+        // Удаляем частицу после анимации
+        setTimeout(() => {
+            particle.remove();
+        }, 500);
+    }
+    
+    // Добавляем CSS анимацию для частиц
+    if (!document.querySelector('#particle-animation')) {
+        const style = document.createElement('style');
+        style.id = 'particle-animation';
+        style.textContent = `
+            @keyframes particleFly {
+                0% {
+                    opacity: 1;
+                    transform: translate(0, 0) scale(1) rotate(0deg);
+                }
+                100% {
+                    opacity: 0;
+                    transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) scale(0.5) rotate(360deg);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// ПОКУПКА УЛУЧШЕНИЙ
 function buyUpgrade(type) {
     const price = prices[type];
     
@@ -92,7 +165,7 @@ function buyUpgrade(type) {
             case 'power':
                 gameState.clickPower++;
                 prices.power = Math.floor(prices.power * 1.5);
-                showNotification('⚡ Сила увеличена до ' + gameState.clickPower);
+                showNotification(`⚡ Сила клика: ${gameState.clickPower}`);
                 break;
                 
             case 'multiplier':
@@ -100,17 +173,14 @@ function buyUpgrade(type) {
                     gameState.multiplierLevel++;
                     gameState.multiplier = Math.pow(2, gameState.multiplierLevel);
                     prices.multiplier = Math.floor(prices.multiplier * 3);
-                    showNotification('✖️ Множитель x' + gameState.multiplier + '!');
-                } else {
-                    showNotification('🚫 Максимальный уровень множителя');
-                    return;
+                    showNotification(`✖️ Множитель x${gameState.multiplier}!`);
                 }
                 break;
                 
             case 'autoclicker':
                 gameState.autoclickerLevel++;
                 prices.autoclicker = Math.floor(prices.autoclicker * 2);
-                showNotification('🤖 Автокликер ' + gameState.autoclickerLevel + ' ур.');
+                showNotification(`🤖 Автокликер: ${gameState.autoclickerLevel} ур.`);
                 startAutoclicker();
                 break;
         }
@@ -118,61 +188,42 @@ function buyUpgrade(type) {
         gameState.level++;
         updateUI();
         saveGame();
+        
+        // Анимация успешной покупки
+        const event = new CustomEvent('upgradeBought', { detail: { type, level: gameState.level } });
+        document.dispatchEvent(event);
+        
     } else {
-        showNotification('❌ Не хватает ' + (price - gameState.cheese) + ' сырков');
+        showNotification(`❌ Не хватает ${price - gameState.cheese} сыра`);
     }
 }
 
-// Покупка префикса
-function buyPrefix(type) {
-    const price = prices[type];
-    
-    if (gameState.cheese >= price) {
-        gameState.cheese -= price;
-        gameState.prefix = type;
+// ПОКУПКА ПРЕФИКСА
+document.querySelectorAll('.buy-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const item = this.closest('.shop-item').getAttribute('data-item');
+        const price = parseInt(this.getAttribute('data-price'));
         
-        let prefixName = '';
-        switch(type) {
-            case 'king': prefixName = '👑 Король'; break;
-            case 'star': prefixName = '⭐ Звезда'; break;
-            case 'fire': prefixName = '🔥 Огненный'; break;
+        if (gameState.cheese >= price) {
+            gameState.cheese -= price;
+            gameState.prefix = item;
+            
+            // Анимация покупки
+            this.style.background = 'linear-gradient(135deg, #4caf50 0%, #2e7d32 100%)';
+            this.innerHTML = '<i class="fas fa-check"></i> Куплено';
+            this.disabled = true;
+            
+            showNotification(`✅ Префикс куплен!`);
+            updateUI();
+            saveGame();
+            
+        } else {
+            showNotification(`❌ Не хватает ${price - gameState.cheese} сыра`);
         }
-        
-        showNotification('✅ Куплен префикс ' + prefixName);
-        updateUI();
-        saveGame();
-    } else {
-        showNotification('❌ Не хватает сырков');
-    }
-}
+    });
+});
 
-// Перевод сыра
-function transferCheese() {
-    const amount = parseInt(document.getElementById('transferAmount').value);
-    const targetId = document.getElementById('transferUser').value;
-    
-    if (!amount || amount < 1) {
-        showNotification('❌ Введите сумму');
-        return;
-    }
-    
-    if (!targetId) {
-        showNotification('❌ Введите ID игрока');
-        return;
-    }
-    
-    if (gameState.cheese >= amount) {
-        // В реальном приложении здесь будет запрос к серверу
-        gameState.cheese -= amount;
-        showNotification('✅ Переведено ' + amount + ' сырков игроку ' + targetId);
-        updateUI();
-        saveGame();
-    } else {
-        showNotification('❌ Недостаточно сырков');
-    }
-}
-
-// Автокликер
+// АВТОКЛИКЕР
 let autoclickerInterval = null;
 
 function startAutoclicker() {
@@ -190,118 +241,185 @@ function startAutoclicker() {
     }
 }
 
-// Обновление интерфейса
+// ПЕРЕВОД СЫРА
+function transferCheese() {
+    const amount = parseInt(document.getElementById('transferAmount').value);
+    const targetId = document.getElementById('transferUser').value.trim();
+    
+    if (!amount || amount < 1) {
+        showNotification('❌ Введите корректную сумму');
+        return;
+    }
+    
+    if (!targetId) {
+        showNotification('❌ Введите ID получателя');
+        return;
+    }
+    
+    if (gameState.cheese >= amount) {
+        gameState.cheese -= amount;
+        
+        // Анимация перевода
+        const btn = document.querySelector('.transfer-btn');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
+        btn.disabled = true;
+        
+        setTimeout(() => {
+            showNotification(`✅ Переведено ${amount} сыра игроку ${targetId}`);
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Отправить перевод';
+            btn.disabled = false;
+            
+            updateUI();
+            saveGame();
+        }, 1500);
+        
+    } else {
+        showNotification('❌ Недостаточно сыра');
+    }
+}
+
+// ОБНОВЛЕНИЕ ИНТЕРФЕЙСА
 function updateUI() {
-    // Обновляем счетчики
+    // Счетчики
     document.getElementById('cheeseCount').textContent = formatNumber(gameState.cheese);
     document.getElementById('clickPower').textContent = gameState.clickPower;
-    document.getElementById('level').textContent = gameState.level;
-    document.getElementById('currentPower').textContent = '+' + (gameState.clickPower * gameState.multiplier);
+    document.getElementById('multiplier').textContent = `x${gameState.multiplier}`;
+    document.getElementById('autoclicker').textContent = `${gameState.autoclickerLevel * 5}/сек`;
+    document.getElementById('userLevel').textContent = `Ур. ${gameState.level}`;
+    document.getElementById('clickPowerText').textContent = `+${gameState.clickPower * gameState.multiplier}`;
+    document.getElementById('availableCheese').textContent = `${gameState.cheese} 🧀`;
     
-    // Обновляем цены
-    document.getElementById('powerPrice').textContent = prices.power + ' сырков';
-    document.getElementById('multiplierPrice').textContent = prices.multiplier + ' сырков';
-    document.getElementById('autoclickerPrice').textContent = prices.autoclicker + ' сырков';
+    // Цены
+    document.getElementById('powerPrice').textContent = prices.power;
+    document.getElementById('multiplierPrice').textContent = prices.multiplier;
+    document.getElementById('autoclickerPrice').textContent = prices.autoclicker;
     
-    // Обновляем топ (заглушка)
+    // Обновляем кнопки
+    updateButtons();
+    
+    // Обновляем топ
     updateTopList();
-    
-    // Обновляем время
-    document.getElementById('updateTime').textContent = new Date().toLocaleTimeString('ru-RU', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    
-    // Проверяем кнопки
-    checkButtons();
 }
 
-// Обновление топа (заглушка)
-function updateTopList() {
-    // В реальном приложении здесь запрос к серверу
-    const topList = document.getElementById('topList');
-    topList.innerHTML = `
-        <div class="top-item">1. ${gameState.prefix ? getPrefixEmoji(gameState.prefix) + ' ' : ''}${gameState.username} - ${formatNumber(gameState.cheese)} 🧀</div>
-        <div class="top-item">2. Игрок2 - 500 🧀</div>
-        <div class="top-item">3. Игрок3 - 300 🧀</div>
-    `;
-}
-
-// Проверка доступности кнопок
-function checkButtons() {
-    const buttons = document.querySelectorAll('.upgrade-btn, .prefix-btn');
-    buttons.forEach(btn => {
-        const type = btn.getAttribute('onclick')?.match(/'(.*?)'/)?.[1];
-        if (type && prices[type]) {
-            btn.disabled = gameState.cheese < prices[type];
-        }
-    });
-}
-
-// Всплывающий текст при клике
-function showFloatingText(text, element) {
-    const floatText = document.createElement('div');
-    floatText.textContent = text;
-    floatText.style.cssText = `
-        position: absolute;
-        color: #fff;
-        font-weight: bold;
-        font-size: 20px;
-        text-shadow: 1px 1px 2px #000;
-        pointer-events: none;
-        animation: floatUp 1s ease-out forwards;
-        z-index: 100;
-    `;
-    
-    const rect = element.getBoundingClientRect();
-    floatText.style.left = (rect.width / 2 - 20) + 'px';
-    floatText.style.top = (rect.height / 2 - 20) + 'px';
-    
-    element.appendChild(floatText);
-    
-    setTimeout(() => {
-        floatText.remove();
-    }, 1000);
-}
-
-// Уведомления
-function showNotification(text) {
-    const notification = document.getElementById('notification');
-    notification.textContent = text;
-    notification.style.display = 'block';
-    
-    setTimeout(() => {
-        notification.style.display = 'none';
-    }, 3000);
-}
-
-// Форматирование чисел
+// ФОРМАТИРОВАНИЕ ЧИСЕЛ
 function formatNumber(num) {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
     return num;
 }
 
-// Получение эмодзи префикса
-function getPrefixEmoji(prefix) {
-    switch(prefix) {
-        case 'king': return '👑';
-        case 'star': return '⭐';
-        case 'fire': return '🔥';
-        default: return '';
+// ВСПЛЫВАЮЩИЙ ТЕКСТ
+function showFloatingText(text, element) {
+    const floatText = document.createElement('div');
+    floatText.textContent = text;
+    floatText.className = 'floating-text';
+    
+    const rect = element.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    
+    floatText.style.cssText = `
+        position: fixed;
+        left: ${x}px;
+        top: ${y}px;
+        color: #ff8f00;
+        font-weight: bold;
+        font-size: 24px;
+        text-shadow: 2px 2px 0 white;
+        pointer-events: none;
+        z-index: 1000;
+        animation: floatUp 1s ease-out forwards;
+    `;
+    
+    document.body.appendChild(floatText);
+    
+    setTimeout(() => {
+        floatText.remove();
+    }, 1000);
+}
+
+// УВЕДОМЛЕНИЯ
+function showNotification(text) {
+    const notification = document.getElementById('notification');
+    notification.textContent = text;
+    notification.classList.add('show');
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 3000);
+}
+
+// ОБНОВЛЕНИЕ КНОПОК
+function updateButtons() {
+    // Улучшения
+    const upgradeBtns = document.querySelectorAll('.upgrade-btn');
+    upgradeBtns.forEach(btn => {
+        const type = btn.getAttribute('onclick')?.match(/'(.*?)'/)?.[1];
+        if (type && prices[type]) {
+            btn.disabled = gameState.cheese < prices[type];
+        }
+    });
+    
+    // Префиксы
+    const buyBtns = document.querySelectorAll('.buy-btn:not([disabled])');
+    buyBtns.forEach(btn => {
+        const price = parseInt(btn.getAttribute('data-price'));
+        btn.disabled = gameState.cheese < price;
+    });
+    
+    // Перевод
+    document.querySelector('.transfer-btn').disabled = gameState.cheese < 1;
+}
+
+// ОБНОВЛЕНИЕ ТОПА
+function updateTopList() {
+    const topPlayers = document.querySelectorAll('.top-player');
+    if (topPlayers[0]) {
+        const nameSpan = topPlayers[0].querySelector('.player-name');
+        let prefix = '';
+        if (gameState.prefix === 'king') prefix = '[👑] ';
+        else if (gameState.prefix === 'star') prefix = '[⭐] ';
+        else if (gameState.prefix === 'fire') prefix = '[🔥] ';
+        
+        nameSpan.textContent = prefix + gameState.username;
+        topPlayers[0].querySelector('.player-score').textContent = `${gameState.cheese} 🧀`;
     }
 }
 
-// Добавляем CSS анимацию
-const style = document.createElement('style');
-style.textContent = `
-@keyframes floatUp {
-    0% { opacity: 1; transform: translateY(0) scale(1); }
-    100% { opacity: 0; transform: translateY(-50px) scale(1.2); }
+// СОХРАНЕНИЕ И ЗАГРУЗКА
+function saveGame() {
+    localStorage.setItem('cheeseGame_v2', JSON.stringify({
+        ...gameState,
+        prices: prices
+    }));
 }
-`;
-document.head.appendChild(style);
 
-// Запуск игры
-initUser();
-startAutoclicker();
+function loadGame() {
+    const saved = localStorage.getItem('cheeseGame_v2');
+    if (saved) {
+        const data = JSON.parse(saved);
+        Object.assign(gameState, data);
+        if (data.prices) {
+            prices = data.prices;
+        }
+    }
+}
+
+// Запуск приложения
+document.addEventListener('DOMContentLoaded', init);
+
+// Добавляем CSS для всплывающего текста
+const floatingStyle = document.createElement('style');
+floatingStyle.textContent = `
+    @keyframes floatUp {
+        0% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        100% {
+            opacity: 0;
+            transform: translate(-50%, -100px) scale(1.5);
+        }
+    }
+`;
+document.head.appendChild(floatingStyle);
