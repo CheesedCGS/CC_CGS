@@ -1,143 +1,232 @@
 class CheeseGame {
     constructor() {
         this.cheese = 0;
-        this.power = 1;
+        this.clickPower = 1;
         this.totalClicks = 0;
         this.userId = null;
+        this.username = '';
         this.isAdmin = false;
         
-        // Улучшения
         this.upgrades = {
             click: { level: 1, cost: 50 },
-            auto: { level: 0, cost: 100 },
-            tax: { level: 0, cost: 200 }
+            auto: { level: 0, cost: 100 }
         };
         
-        // Данные для админки
-        this.users = [];
+        this.taxPaid = false;
+        this.dailyCollected = false;
         
         this.init();
     }
     
     init() {
-        // Загрузка из localStorage
         this.loadFromStorage();
+        this.initUI();
+        this.initClicker();
+        this.initUpgrades();
         
-        // Инициализация UI
-        this.updateUI();
-        
-        // Автокликер
-        if (this.upgrades.auto.level > 0) {
-            this.startAutoClicker();
+        if (this.isAdmin) {
+            this.initAdmin();
+        } else {
+            this.hideAdminTab();
         }
         
-        // Периодическое сохранение
-        setInterval(() => this.saveToStorage(), 30000);
+        this.startAutoClicker();
+        this.startAutoSave();
         
-        // Обновление статуса бота
-        this.updateBotStatus();
-        
-        console.log('Cheese Game initialized!');
+        console.log('Игра запущена!');
     }
     
     loadFromStorage() {
-        const saved = localStorage.getItem('cheeseGame');
+        const saved = localStorage.getItem('cheeseGameData');
         if (saved) {
             const data = JSON.parse(saved);
             this.cheese = data.cheese || 0;
-            this.power = data.power || 1;
+            this.clickPower = data.clickPower || 1;
             this.totalClicks = data.totalClicks || 0;
             this.upgrades = data.upgrades || this.upgrades;
-            this.userId = data.userId || null;
-            this.isAdmin = data.isAdmin || false;
-        }
-        
-        // Тестовый режим (для демо)
-        if (!this.userId) {
-            this.userId = Math.floor(Math.random() * 1000000);
-            this.isAdmin = this.userId === 777777; // Тестовый админ
+            this.userId = data.userId || this.generateUserId();
+            this.isAdmin = data.isAdmin || this.checkIfAdmin();
+            this.taxPaid = data.taxPaid || false;
+            
+            // Проверяем ежедневную награду
+            const lastDaily = data.lastDaily;
+            const today = new Date().toDateString();
+            this.dailyCollected = lastDaily === today;
+        } else {
+            this.userId = this.generateUserId();
+            this.isAdmin = this.checkIfAdmin();
+            this.cheese = 50; // Стартовый сыр
             this.saveToStorage();
         }
+    }
+    
+    generateUserId() {
+        return 'user_' + Math.random().toString(36).substr(2, 9);
+    }
+    
+    checkIfAdmin() {
+        // В реальном приложении проверка через Telegram WebApp
+        return this.userId === 'admin' || Math.random() < 0.1; // 10% шанс для теста
     }
     
     saveToStorage() {
         const data = {
             cheese: this.cheese,
-            power: this.power,
+            clickPower: this.clickPower,
             totalClicks: this.totalClicks,
             upgrades: this.upgrades,
             userId: this.userId,
             isAdmin: this.isAdmin,
+            taxPaid: this.taxPaid,
+            lastDaily: this.dailyCollected ? new Date().toDateString() : null,
             lastSave: new Date().toISOString()
         };
-        localStorage.setItem('cheeseGame', JSON.stringify(data));
+        localStorage.setItem('cheeseGameData', JSON.stringify(data));
         
-        // Симуляция отправки на сервер
-        this.simulateServerSave(data);
+        // Симуляция синхронизации с ботом
+        this.syncWithBot();
     }
     
-    simulateServerSave(data) {
+    syncWithBot() {
         // В реальном приложении здесь будет запрос к боту
-        console.log('Данные сохранены:', data);
-        
-        // Обновляем статус
-        document.getElementById('bot-status').textContent = '🟢 онлайн';
-        setTimeout(() => {
-            if (Math.random() > 0.1) { // 90% шанс что бот онлайн
-                document.getElementById('bot-status').textContent = '🟢 онлайн';
-            } else {
-                document.getElementById('bot-status').textContent = '🔴 офлайн';
-            }
-        }, 5000);
+        console.log('Синхронизация с ботом...');
     }
     
-    updateUI() {
-        // Обновление баланса
-        document.getElementById('balance').textContent = this.cheese;
-        document.getElementById('power').textContent = this.power;
-        document.getElementById('total-clicks').textContent = this.totalClicks;
+    initUI() {
+        this.updateBalance();
+        this.updateClickPower();
+        this.updateTaxInfo();
+        this.updateUpgradeUI();
+        this.updateAdminInfo();
+    }
+    
+    initClicker() {
+        const clickArea = document.getElementById('click-area');
+        if (!clickArea) return;
         
-        // Обновление улучшений
-        document.getElementById('click-level').textContent = this.upgrades.click.level;
+        clickArea.addEventListener('click', (e) => {
+            this.addCheese(this.clickPower);
+            this.totalClicks++;
+            this.showClickEffect(e.clientX, e.clientY);
+            
+            // Обновляем UI
+            document.getElementById('click-count').textContent = this.totalClicks;
+            
+            // Сохраняем
+            this.saveToStorage();
+        });
+    }
+    
+    initUpgrades() {
+        // Обновляем цены улучшений
         document.getElementById('click-cost').textContent = this.upgrades.click.cost;
-        
-        document.getElementById('auto-level').textContent = this.upgrades.auto.level;
         document.getElementById('auto-cost').textContent = this.upgrades.auto.cost;
+        document.getElementById('click-level').textContent = this.upgrades.click.level;
+        document.getElementById('auto-level').textContent = this.upgrades.auto.level;
+    }
+    
+    initAdmin() {
+        // Показываем вкладку админа
+        document.getElementById('admin-tab-btn').style.display = 'flex';
+        this.loadUsersList();
+    }
+    
+    hideAdminTab() {
+        document.getElementById('admin-tab-btn').style.display = 'none';
+    }
+    
+    addCheese(amount) {
+        this.cheese += amount;
+        this.updateBalance();
         
-        document.getElementById('tax-level').textContent = this.upgrades.tax.level;
-        document.getElementById('tax-cost').textContent = this.upgrades.tax.cost;
+        // Анимация добавления
+        this.showFloatingText(`+${amount}`, document.querySelector('.cheese'));
+    }
+    
+    updateBalance() {
+        const balanceEl = document.getElementById('cheese-count');
+        if (balanceEl) {
+            balanceEl.textContent = this.cheese;
+        }
         
-        // Обновление статуса налога
-        const taxPaid = localStorage.getItem('taxPaid') === new Date().toDateString();
-        document.getElementById('tax-status').textContent = taxPaid ? '✅' : '❌';
+        // Обновляем налог
+        this.updateTaxAmount();
+    }
+    
+    updateClickPower() {
+        document.getElementById('click-power').textContent = this.clickPower;
+    }
+    
+    updateTaxAmount() {
+        // Расчет налога на основе баланса и силы клика
+        const baseTax = 5;
+        const cheeseTax = Math.max(1, Math.floor(this.cheese / 100));
+        const powerTax = this.clickPower * 2;
+        const totalTax = baseTax + cheeseTax + powerTax;
         
-        // Админ панель
-        document.getElementById('admin-id').textContent = this.userId;
-        
-        if (!this.isAdmin) {
-            document.getElementById('admin-tab').style.display = 'none';
-            document.querySelector('[onclick="switchTab(\'admin\')"]').style.display = 'none';
-        } else {
-            this.loadUsers();
+        document.getElementById('tax-amount').textContent = totalTax;
+    }
+    
+    updateTaxInfo() {
+        const taxStatusEl = document.getElementById('tax-status');
+        if (taxStatusEl) {
+            taxStatusEl.textContent = this.taxPaid ? '✅ Оплачен' : '❌ Не оплачен';
+            taxStatusEl.style.color = this.taxPaid ? '#34c759' : '#ff3b30';
         }
     }
     
-    clickCheese() {
-        this.cheese += this.power;
-        this.totalClicks++;
+    updateUpgradeUI() {
+        // Обновляем доступность улучшений
+        const clickUpgrade = document.querySelector('[onclick="buyUpgrade(\'click\')"]');
+        const autoUpgrade = document.querySelector('[onclick="buyUpgrade(\'auto\')"]');
         
-        // Анимация
-        const cheese = document.getElementById('cheese-btn');
-        cheese.style.transform = 'scale(0.9)';
+        if (clickUpgrade) {
+            clickUpgrade.style.opacity = this.cheese >= this.upgrades.click.cost ? '1' : '0.5';
+        }
+        
+        if (autoUpgrade) {
+            autoUpgrade.style.opacity = this.cheese >= this.upgrades.auto.cost ? '1' : '0.5';
+        }
+    }
+    
+    updateAdminInfo() {
+        document.getElementById('user-id').textContent = this.userId;
+    }
+    
+    showClickEffect(x, y) {
+        const effect = document.createElement('div');
+        effect.className = 'click-effect';
+        effect.textContent = `+${this.clickPower}`;
+        effect.style.left = `${x}px`;
+        effect.style.top = `${y}px`;
+        
+        document.body.appendChild(effect);
+        
         setTimeout(() => {
-            cheese.style.transform = 'scale(1)';
-        }, 100);
+            document.body.removeChild(effect);
+        }, 1000);
+    }
+    
+    showFloatingText(text, element) {
+        const rect = element.getBoundingClientRect();
+        const floatText = document.createElement('div');
+        floatText.textContent = text;
+        floatText.style.position = 'fixed';
+        floatText.style.left = rect.left + rect.width / 2 + 'px';
+        floatText.style.top = rect.top + 'px';
+        floatText.style.color = '#ff6b35';
+        floatText.style.fontWeight = 'bold';
+        floatText.style.fontSize = '20px';
+        floatText.style.pointerEvents = 'none';
+        floatText.style.zIndex = '1000';
+        floatText.style.textShadow = '0 2px 10px rgba(0,0,0,0.5)';
+        floatText.style.animation = 'floatUp 1s forwards';
         
-        // Показать +N
-        this.showFloatingText(`+${this.power}`, cheese);
+        document.body.appendChild(floatText);
         
-        this.updateUI();
-        this.saveToStorage();
+        setTimeout(() => {
+            document.body.removeChild(floatText);
+        }, 1000);
     }
     
     buyUpgrade(type) {
@@ -145,82 +234,151 @@ class CheeseGame {
         
         if (this.cheese >= upgrade.cost) {
             this.cheese -= upgrade.cost;
-            upgrade.level++;
-            upgrade.cost = Math.floor(upgrade.cost * 1.5);
             
-            // Эффекты улучшений
             if (type === 'click') {
-                this.power += 1;
-            } else if (type === 'auto' && upgrade.level === 1) {
-                this.startAutoClicker();
+                this.clickPower++;
+                upgrade.level++;
+                upgrade.cost = Math.floor(upgrade.cost * 1.5);
+                
+                this.updateClickPower();
+                document.getElementById('click-level').textContent = upgrade.level;
+                document.getElementById('click-cost').textContent = upgrade.cost;
+            } else if (type === 'auto') {
+                upgrade.level++;
+                upgrade.cost = Math.floor(upgrade.cost * 2);
+                
+                document.getElementById('auto-level').textContent = upgrade.level;
+                document.getElementById('auto-cost').textContent = upgrade.cost;
             }
             
-            // Анимация покупки
-            const upgradeCard = document.querySelector(`[onclick="buyUpgrade('${type}')"]`);
-            upgradeCard.style.background = 'var(--tg-success)';
-            setTimeout(() => {
-                upgradeCard.style.background = '';
-            }, 500);
-            
-            this.updateUI();
+            this.updateBalance();
+            this.updateUpgradeUI();
             this.saveToStorage();
             
-            // Уведомление
             this.showNotification('Улучшение куплено!');
         } else {
             this.showNotification('Недостаточно сыра!');
         }
     }
     
-    startAutoClicker() {
-        if (this.upgrades.auto.level > 0) {
-            setInterval(() => {
-                this.cheese += this.upgrades.auto.level * 5;
-                this.updateUI();
-                
-                // Автосохранение каждую минуту
-                if (new Date().getSeconds() === 0) {
-                    this.saveToStorage();
-                }
-            }, 60000); // Каждую минуту
+    payTax() {
+        const baseTax = 5;
+        const cheeseTax = Math.max(1, Math.floor(this.cheese / 100));
+        const powerTax = this.clickPower * 2;
+        const totalTax = baseTax + cheeseTax + powerTax;
+        
+        if (this.cheese >= totalTax) {
+            this.cheese -= totalTax;
+            this.taxPaid = true;
+            
+            this.updateBalance();
+            this.updateTaxInfo();
+            this.saveToStorage();
+            
+            this.showNotification(`Налог ${totalTax} сыра оплачен!`);
+        } else {
+            this.showNotification(`Недостаточно сыра! Нужно: ${totalTax}`);
         }
     }
     
-    showFloatingText(text, element) {
-        const floatText = document.createElement('div');
-        floatText.textContent = text;
-        floatText.style.position = 'absolute';
-        floatText.style.color = '#FFD700';
-        floatText.style.fontWeight = 'bold';
-        floatText.style.fontSize = '24px';
-        floatText.style.pointerEvents = 'none';
-        floatText.style.zIndex = '1000';
-        floatText.style.textShadow = '0 2px 10px rgba(0,0,0,0.5)';
+    collectDaily() {
+        if (this.dailyCollected) {
+            this.showNotification('Ежедневная награда уже получена!');
+            return;
+        }
         
-        const rect = element.getBoundingClientRect();
-        floatText.style.left = (rect.left + rect.width / 2 - 20) + 'px';
-        floatText.style.top = (rect.top - 20) + 'px';
+        const dailyReward = 100 + (this.clickPower * 10);
+        this.cheese += dailyReward;
+        this.dailyCollected = true;
         
-        document.body.appendChild(floatText);
+        this.updateBalance();
+        this.saveToStorage();
         
-        // Анимация
-        let opacity = 1;
-        let top = rect.top - 20;
-        
-        const animate = () => {
-            opacity -= 0.02;
-            top -= 2;
-            floatText.style.opacity = opacity;
-            floatText.style.top = top + 'px';
-            
-            if (opacity > 0) {
-                requestAnimationFrame(animate);
-            } else {
-                document.body.removeChild(floatText);
+        this.showNotification(`Ежедневная награда: ${dailyReward} сыра!`);
+    }
+    
+    startAutoClicker() {
+        setInterval(() => {
+            if (this.upgrades.auto.level > 0) {
+                const autoGain = this.upgrades.auto.level * 5;
+                this.addCheese(autoGain);
+                this.saveToStorage();
             }
+        }, 60000); // Каждую минуту
+    }
+    
+    startAutoSave() {
+        setInterval(() => {
+            this.saveToStorage();
+            console.log('Автосохранение...');
+        }, 30000); // Каждые 30 секунд
+    }
+    
+    // Админ функции
+    loadUsersList() {
+        if (!this.isAdmin) return;
+        
+        // Симуляция данных
+        const users = [
+            { id: 1, name: 'User1', cheese: 1000, taxPaid: true },
+            { id: 2, name: 'User2', cheese: 500, taxPaid: false },
+            { id: 3, name: 'User3', cheese: 750, taxPaid: true }
+        ];
+        
+        const usersList = document.getElementById('users-list');
+        if (!usersList) return;
+        
+        usersList.innerHTML = '';
+        
+        users.forEach(user => {
+            const userEl = document.createElement('div');
+            userEl.className = 'user-item';
+            userEl.innerHTML = `
+                <div class="user-info">
+                    <div class="user-name">${user.name}</div>
+                    <div>ID: ${user.id}</div>
+                </div>
+                <div class="user-cheese">${user.cheese} 🧀</div>
+                <div class="user-tax">${user.taxPaid ? '✅' : '❌'}</div>
+            `;
+            usersList.appendChild(userEl);
+        });
+    }
+    
+    setExempt() {
+        const userId = document.getElementById('exempt-user').value;
+        const exemptType = document.getElementById('exempt-type').value;
+        
+        if (!userId) {
+            this.showNotification('Введите username или ID');
+            return;
+        }
+        
+        // Симуляция
+        console.log(`Установка исключения: ${userId} - ${exemptType}`);
+        this.showNotification('Настройки применены');
+        
+        document.getElementById('exempt-user').value = '';
+    }
+    
+    exportData() {
+        const data = {
+            users: [
+                { name: 'User1', cheese: 1000 },
+                { name: 'User2', cheese: 500 }
+            ],
+            timestamp: new Date().toISOString()
         };
         
-        animate();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cheese_data_${Date.now()}.json`;
+        a.click();
+        
+        URL.revokeObjectURL(url);
+        this.showNotification('Данные экспортированы');
     }
     
     showNotification(message) {
@@ -234,15 +392,14 @@ class CheeseGame {
             background: var(--tg-accent);
             color: white;
             padding: 12px 24px;
-            border-radius: var(--tg-radius);
+            border-radius: 8px;
             z-index: 10000;
-            box-shadow: var(--tg-shadow);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
             animation: slideIn 0.3s ease;
         `;
         
         document.body.appendChild(notification);
         
-        // Убираем через 3 секунды
         setTimeout(() => {
             notification.style.animation = 'slideOut 0.3s ease';
             setTimeout(() => {
@@ -250,126 +407,63 @@ class CheeseGame {
             }, 300);
         }, 3000);
     }
-    
-    // Админ функции
-    setExempt() {
-        const userId = document.getElementById('exempt-id').value;
-        const exemptType = document.querySelector('input[name="exempt-type"]:checked').value;
-        
-        if (!userId) {
-            this.showNotification('Введите ID пользователя');
-            return;
-        }
-        
-        // Симуляция запроса к боту
-        console.log(`Освободить ${userId} от ${exemptType}`);
-        this.showNotification(`Настройки применены для ${userId}`);
-        document.getElementById('exempt-id').value = '';
-    }
-    
-    loadUsers() {
-        // Симуляция загрузки пользователей
-        this.users = [
-            { id: 123456, name: 'User1', cheese: 1000, taxPaid: true },
-            { id: 654321, name: 'User2', cheese: 500, taxPaid: false },
-            { id: 777777, name: 'Admin', cheese: 9999, taxPaid: true }
-        ];
-        
-        const usersList = document.getElementById('users-list');
-        usersList.innerHTML = '';
-        
-        this.users.forEach(user => {
-            const row = document.createElement('div');
-            row.className = 'user-row';
-            row.innerHTML = `
-                <div class="col-user">
-                    <div class="user-avatar">${user.name.charAt(0)}</div>
-                    <div class="user-info">
-                        <div class="user-name">${user.name}</div>
-                        <div class="user-id">ID: ${user.id}</div>
-                    </div>
-                </div>
-                <div class="col-cheese">${user.cheese} 🧀</div>
-                <div class="col-tax">${user.taxPaid ? '✅' : '❌'}</div>
-            `;
-            usersList.appendChild(row);
-        });
-        
-        this.showNotification('Список обновлен');
-    }
-    
-    exportData() {
-        const data = {
-            users: this.users,
-            timestamp: new Date().toISOString(),
-            totalCheese: this.users.reduce((sum, user) => sum + user.cheese, 0)
-        };
-        
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `cheese_data_${new Date().getTime()}.json`;
-        a.click();
-        
-        URL.revokeObjectURL(url);
-        this.showNotification('Данные экспортированы');
-    }
-    
-    updateBotStatus() {
-        setInterval(() => {
-            const status = document.getElementById('bot-status');
-            if (Math.random() > 0.2) { // 80% шанс что онлайн
-                status.textContent = '🟢 онлайн';
-                status.style.color = 'var(--tg-success)';
-            } else {
-                status.textContent = '🔴 офлайн';
-                status.style.color = 'var(--tg-danger)';
-            }
-        }, 15000);
-    }
 }
 
-// Глобальные функции для вызова из HTML
+// Глобальные функции
+let game;
+
 function switchTab(tabName) {
     // Скрыть все вкладки
-    document.querySelectorAll('.tab-content').forEach(tab => {
+    document.querySelectorAll('.clicker-section, .upgrades-section, .admin-section').forEach(tab => {
         tab.classList.remove('active');
     });
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
+    
+    // Убрать активный класс у всех кнопок
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
     });
     
     // Показать выбранную вкладку
     document.getElementById(`${tabName}-tab`).classList.add('active');
+    
+    // Активировать кнопку
     document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
-}
-
-function clickCheese() {
-    window.game.clickCheese();
+    
+    // Если админ, загрузить список
+    if (tabName === 'admin' && game && game.isAdmin) {
+        game.loadUsersList();
+    }
 }
 
 function buyUpgrade(type) {
-    window.game.buyUpgrade(type);
+    if (game) game.buyUpgrade(type);
+}
+
+function payTax() {
+    if (game) game.payTax();
+}
+
+function collectDaily() {
+    if (game) game.collectDaily();
 }
 
 function setExempt() {
-    window.game.setExempt();
+    if (game) game.setExempt();
 }
 
 function loadUsers() {
-    window.game.loadUsers();
+    if (game) game.loadUsersList();
 }
 
 function exportData() {
-    window.game.exportData();
+    if (game) game.exportData();
 }
 
-// Запуск игры при загрузке страницы
-window.addEventListener('DOMContentLoaded', () => {
-    window.game = new CheeseGame();
+// Запуск игры
+document.addEventListener('DOMContentLoaded', () => {
+    game = new CheeseGame();
     
-    // Добавляем CSS для анимаций
+    // Добавляем стили для анимаций
     const style = document.createElement('style');
     style.textContent = `
         @keyframes slideIn {
@@ -380,6 +474,11 @@ window.addEventListener('DOMContentLoaded', () => {
         @keyframes slideOut {
             from { transform: translateX(0); opacity: 1; }
             to { transform: translateX(100%); opacity: 0; }
+        }
+        
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.2); }
         }
     `;
     document.head.appendChild(style);

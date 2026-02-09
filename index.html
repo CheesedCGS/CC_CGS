@@ -3,160 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cheese Clicker 🧀</title>
+    <title>Cheese Clicker</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="telegram-app">
         <!-- Верхняя панель -->
-        <div class="top-bar">
-            <div class="balance-box">
-                <div class="balance-label">Ваш сыр</div>
-                <div class="balance-amount" id="balance">0</div>
+        <div class="header">
+            <div class="balance-container">
+                <div class="balance-label">СЫР</div>
+                <div class="balance-amount" id="cheese-count">0</div>
                 <div class="balance-icon">🧀</div>
             </div>
-            <div class="power-box">
-                <div class="power-label">Сила клика</div>
-                <div class="power-amount" id="power">1</div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-label">Сила</div>
+                    <div class="stat-value" id="click-power">1</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Налог</div>
+                    <div class="stat-value" id="tax-amount">0</div>
+                </div>
             </div>
         </div>
 
-        <!-- Вкладки -->
-        <div class="tabs-container">
-            <div class="tabs">
-                <button class="tab active" onclick="switchTab('clicker')">
-                    <span class="tab-icon">🧀</span>
-                    <span class="tab-text">Кликер</span>
-                </button>
-                <button class="tab" onclick="switchTab('upgrades')">
-                    <span class="tab-icon">⚡</span>
-                    <span class="tab-text">Прокачка</span>
-                </button>
-                <button class="tab" onclick="switchTab('admin')">
-                    <span class="tab-icon">👑</span>
-                    <span class="tab-text">Админ</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Контент вкладок -->
+        <!-- Основной контент -->
         <div class="content">
-            <!-- Вкладка 1: Кликер -->
-            <div id="clicker-tab" class="tab-content active">
-                <div class="clicker-area">
-                    <div class="cheese" id="cheese-btn" onclick="clickCheese()">
-                        🧀
-                    </div>
-                    <div class="click-info">Кликни на сыр!</div>
+            <!-- Кликер -->
+            <div class="clicker-section active" id="clicker-tab">
+                <div class="click-area" id="click-area">
+                    <div class="cheese">🧀</div>
+                    <div class="click-hint">Кликай везде!</div>
                 </div>
                 
-                <div class="stats">
-                    <div class="stat-item">
-                        <div class="stat-label">Всего кликов</div>
-                        <div class="stat-value" id="total-clicks">0</div>
+                <div class="click-info">
+                    <div class="click-stat">
+                        <span>Кликов:</span>
+                        <span id="click-count">0</span>
                     </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Налог оплачен</div>
-                        <div class="stat-value" id="tax-status">❌</div>
+                    <div class="tax-status">
+                        <span>Налог:</span>
+                        <span id="tax-status">❌ Не оплачен</span>
                     </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Налог сегодня</div>
-                        <div class="stat-value">5 🧀</div>
-                    </div>
+                </div>
+                
+                <div class="actions">
+                    <button class="btn-action" onclick="payTax()">💳 Оплатить налог</button>
+                    <button class="btn-action" onclick="collectDaily()">🎁 Ежедневная награда</button>
                 </div>
             </div>
 
-            <!-- Вкладка 2: Прокачка -->
-            <div id="upgrades-tab" class="tab-content">
-                <div class="upgrades-list">
-                    <div class="upgrade-card" onclick="buyUpgrade('click')">
-                        <div class="upgrade-icon">💪</div>
+            <!-- Прокачка -->
+            <div class="upgrades-section" id="upgrades-tab">
+                <div class="upgrade-list">
+                    <div class="upgrade-item" onclick="buyUpgrade('click')">
+                        <div class="upgrade-icon">⚡</div>
                         <div class="upgrade-info">
                             <div class="upgrade-title">Сила клика</div>
                             <div class="upgrade-desc">+1 сыра за клик</div>
                             <div class="upgrade-level">Уровень: <span id="click-level">1</span></div>
                         </div>
                         <div class="upgrade-cost">
-                            <div class="cost-amount" id="click-cost">50</div>
-                            <div class="cost-icon">🧀</div>
+                            <span id="click-cost">50</span> 🧀
                         </div>
                     </div>
-
-                    <div class="upgrade-card" onclick="buyUpgrade('auto')">
+                    
+                    <div class="upgrade-item" onclick="buyUpgrade('auto')">
                         <div class="upgrade-icon">🤖</div>
                         <div class="upgrade-info">
                             <div class="upgrade-title">Автокликер</div>
-                            <div class="upgrade-desc">+5 сыра в минуту</div>
+                            <div class="upgrade-desc">Автоматические клики</div>
                             <div class="upgrade-level">Уровень: <span id="auto-level">0</span></div>
                         </div>
                         <div class="upgrade-cost">
-                            <div class="cost-amount" id="auto-cost">100</div>
-                            <div class="cost-icon">🧀</div>
-                        </div>
-                    </div>
-
-                    <div class="upgrade-card" onclick="buyUpgrade('tax')">
-                        <div class="upgrade-icon">🏛️</div>
-                        <div class="upgrade-info">
-                            <div class="upgrade-title">Скидка на налог</div>
-                            <div class="upgrade-desc">-1 сыр к налогу</div>
-                            <div class="upgrade-level">Уровень: <span id="tax-level">0</span></div>
-                        </div>
-                        <div class="upgrade-cost">
-                            <div class="cost-amount" id="tax-cost">200</div>
-                            <div class="cost-icon">🧀</div>
+                            <span id="auto-cost">100</span> 🧀
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Вкладка 3: Админ -->
-            <div id="admin-tab" class="tab-content">
-                <div class="admin-section">
-                    <h3 class="admin-title">👑 Панель управления</h3>
-                    <div class="admin-info">ID: <span id="admin-id">...</span></div>
-                </div>
-
-                <div class="admin-controls">
-                    <div class="control-group">
-                        <input type="number" id="exempt-id" placeholder="ID пользователя" class="input-field">
-                        <div class="radio-group">
-                            <label class="radio">
-                                <input type="radio" name="exempt-type" value="tax" checked>
-                                <span>Освободить от налога</span>
-                            </label>
-                            <label class="radio">
-                                <input type="radio" name="exempt-type" value="spend">
-                                <span>Освободить от трат</span>
-                            </label>
+            <!-- Админ -->
+            <div class="admin-section" id="admin-tab">
+                <div class="admin-panel">
+                    <h3>👑 Админ панель</h3>
+                    <div class="admin-info">ID: <span id="user-id">-</span></div>
+                    
+                    <div class="admin-controls">
+                        <div class="input-group">
+                            <input type="text" id="exempt-user" placeholder="@username или ID">
+                            <select id="exempt-type">
+                                <option value="tax">Освободить от налога</option>
+                                <option value="spend">Освободить от трат</option>
+                                <option value="remove">Убрать исключение</option>
+                            </select>
+                            <button class="btn-admin" onclick="setExempt()">Применить</button>
                         </div>
-                        <button class="btn-admin" onclick="setExempt()">Применить</button>
+                        
+                        <div class="admin-actions">
+                            <button class="btn-admin" onclick="loadUsers()">Обновить список</button>
+                            <button class="btn-admin" onclick="exportData()">Экспорт данных</button>
+                        </div>
                     </div>
-
-                    <div class="control-group">
-                        <button class="btn-admin" onclick="loadUsers()">🔄 Обновить список</button>
-                        <button class="btn-admin" onclick="exportData()">📥 Экспорт данных</button>
-                    </div>
-                </div>
-
-                <div class="users-table">
-                    <div class="table-header">
-                        <div class="col-user">Пользователь</div>
-                        <div class="col-cheese">Сыр</div>
-                        <div class="col-tax">Налог</div>
-                    </div>
-                    <div class="table-body" id="users-list">
+                    
+                    <div class="users-list" id="users-list">
                         <!-- Список пользователей -->
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Нижняя панель -->
-        <div class="bottom-bar">
-            <div class="status">Бот: <span id="bot-status">🟢 онлайн</span></div>
-            <div class="creator">Для @Besoljahac</div>
-            <div class="version">v1.0</div>
+        <!-- Нижние вкладки -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('clicker')">
+                <div class="tab-icon">🧀</div>
+                <div class="tab-label">Кликер</div>
+            </button>
+            <button class="tab-btn" onclick="switchTab('upgrades')">
+                <div class="tab-icon">⚡</div>
+                <div class="tab-label">Прокачка</div>
+            </button>
+            <button class="tab-btn" id="admin-tab-btn" onclick="switchTab('admin')">
+                <div class="tab-icon">👑</div>
+                <div class="tab-label">Админ</div>
+            </button>
         </div>
     </div>
 
