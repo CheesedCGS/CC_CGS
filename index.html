@@ -3,81 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сырный Кликер 🧀</title>
-    <!-- Подключаем Telegram SDK -->
+    <title>🧀 Сырный кликер</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Подключаем Google Fonts для веселых шрифтов -->
-    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <!-- Сырный заголовок -->
-        <header class="cheese-header">
-            <h1><i class="fas fa-cheese"></i> СЫРНЫЙ КЛИКЕР</h1>
-            <p class="subtitle">Нажимай на сыр, зарабатывай сырки!</p>
-        </header>
+        <!-- Шапка в стиле Telegram -->
+        <div class="header">
+            <h1>🧀 Сырный кликер</h1>
+            <p class="subtitle">Кликай, зарабатывай, покупай улучшения</p>
+        </div>
 
-        <!-- Основной игровой блок -->
-        <main class="game-area">
-            <!-- Круглый сырный кликер -->
-            <div class="cheese-circle" id="cheeseButton">
-                <div class="cheese-hole"></div>
-                <div class="cheese-hole hole-2"></div>
-                <div class="cheese-hole hole-3"></div>
+        <!-- Основная игровая зона -->
+        <div class="game-area">
+            <!-- Сыр для кликов -->
+            <div class="cheese" id="cheese">
                 <div class="cheese-text">
-                    <span class="cheese-label">КЛИКНИ</span>
-                    <span class="cheese-power">+<span id="powerValue">1</span></span>
+                    <span>КЛИКНИ</span>
+                    <div class="power" id="currentPower">+1</div>
                 </div>
+                <div class="cheese-hole"></div>
+                <div class="cheese-hole hole2"></div>
+                <div class="cheese-hole hole3"></div>
             </div>
 
             <!-- Статистика -->
-            <div class="stats-box">
-                <div class="stat-item">
-                    <i class="fas fa-coins"></i>
-                    <div>
-                        <p class="stat-label">Сырки</p>
-                        <p class="stat-value" id="cheeseCount">0</p>
-                    </div>
+            <div class="stats">
+                <div class="stat">
+                    <span>🧀 Сырки:</span>
+                    <strong id="cheeseCount">0</strong>
                 </div>
-                <div class="stat-item">
-                    <i class="fas fa-bolt"></i>
-                    <div>
-                        <p class="stat-label">Сила клика</p>
-                        <p class="stat-value" id="clickPower">1</p>
-                    </div>
+                <div class="stat">
+                    <span>⚡ Сила:</span>
+                    <strong id="clickPower">1</strong>
                 </div>
-                <div class="stat-item">
-                    <i class="fas fa-trophy"></i>
-                    <div>
-                        <p class="stat-label">Уровень</p>
-                        <p class="stat-value" id="playerLevel">1</p>
-                    </div>
+                <div class="stat">
+                    <span>📊 Уровень:</span>
+                    <strong id="level">1</strong>
                 </div>
             </div>
 
-            <!-- Кнопки улучшений -->
+            <!-- Улучшения -->
             <div class="upgrades">
-                <button class="upgrade-btn" id="upgradePower">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>Улучшить сыр (+1 сила)</span>
-                    <span class="cost" id="powerCost">10 сырков</span>
+                <button class="upgrade-btn" onclick="buyUpgrade('power')">
+                    <span class="btn-icon">⚡</span>
+                    <span class="btn-text">
+                        <strong>Улучшить силу</strong>
+                        <small>+1 к клику</small>
+                    </span>
+                    <span class="btn-price" id="powerPrice">10 сырков</span>
                 </button>
-                
-                <button class="upgrade-btn" id="upgradeAuto">
-                    <i class="fas fa-robot"></i>
-                    <span>Купить мышку (автоклик)</span>
-                    <span class="cost" id="autoCost">50 сырков</span>
+
+                <button class="upgrade-btn" onclick="buyUpgrade('multiplier')">
+                    <span class="btn-icon">✖️</span>
+                    <span class="btn-text">
+                        <strong>Множитель x2</strong>
+                        <small>2x за клик</small>
+                    </span>
+                    <span class="btn-price" id="multiplierPrice">500 сырков</span>
+                </button>
+
+                <button class="upgrade-btn" onclick="buyUpgrade('autoclicker')">
+                    <span class="btn-icon">🤖</span>
+                    <span class="btn-text">
+                        <strong>Автокликер</strong>
+                        <small>+5/сек</small>
+                    </span>
+                    <span class="btn-price" id="autoclickerPrice">1000 сырков</span>
                 </button>
             </div>
-        </main>
 
-        <!-- Уведомления -->
-        <div class="notification" id="notification">
-            <span id="notificationText">+1 сырок!</span>
+            <!-- Магазин префиксов -->
+            <div class="shop">
+                <h3>🏪 Магазин префиксов</h3>
+                <div class="prefixes">
+                    <button class="prefix-btn" onclick="buyPrefix('king')">
+                        [👑] Король - 5000
+                    </button>
+                    <button class="prefix-btn" onclick="buyPrefix('star')">
+                        [⭐] Звезда - 3000
+                    </button>
+                    <button class="prefix-btn" onclick="buyPrefix('fire')">
+                        [🔥] Огненный - 8000
+                    </button>
+                </div>
+            </div>
+
+            <!-- Топ игроков -->
+            <div class="top">
+                <h3>🏆 Топ игроков</h3>
+                <div id="topList">
+                    <div class="top-item">1. Ты - 0 🧀</div>
+                    <div class="top-item">2. Игрок2 - 0 🧀</div>
+                    <div class="top-item">3. Игрок3 - 0 🧀</div>
+                </div>
+            </div>
+
+            <!-- Перевод сыра -->
+            <div class="transfer">
+                <h3>💸 Перевод сыра</h3>
+                <div class="transfer-form">
+                    <input type="number" id="transferAmount" placeholder="Сколько" min="1" value="100">
+                    <input type="text" id="transferUser" placeholder="ID игрока">
+                    <button onclick="transferCheese()">Отправить</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Футер -->
+        <div class="footer">
+            <p>Наш чат: <a href="https://t.me/" target="_blank">@cheeseclickerchat</a></p>
+            <p>Обновлено: <span id="updateTime">сегодня</span></p>
         </div>
     </div>
+
+    <!-- Уведомления -->
+    <div class="notification" id="notification"></div>
 
     <script src="script.js"></script>
 </body>
