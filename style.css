@@ -1,0 +1,255 @@
+/* Основные стили */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Comic Neue', cursive;
+    background: linear-gradient(135deg, #FFF9C4 0%, #FFECB3 100%);
+    color: #5D4037;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+/* Сырный заголовок */
+.cheese-header {
+    background: linear-gradient(to right, #FFB74D, #FF9800);
+    padding: 20px;
+    border-radius: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 20px rgba(255, 152, 0, 0.3);
+    border: 5px solid #FF8F00;
+}
+
+.cheese-header h1 {
+    font-size: 2.5rem;
+    color: #FFF;
+    text-shadow: 2px 2px 0 #E65100;
+    margin-bottom: 10px;
+}
+
+.cheese-header .subtitle {
+    font-size: 1.2rem;
+    color: #FFF3E0;
+    font-weight: bold;
+}
+
+/* Круглый сырный кликер */
+.cheese-circle {
+    width: 280px;
+    height: 280px;
+    background: radial-gradient(circle at 30% 30%, #FFD54F, #FFB300);
+    border-radius: 50%;
+    margin: 30px auto;
+    position: relative;
+    cursor: pointer;
+    box-shadow: 
+        0 15px 35px rgba(255, 179, 0, 0.5),
+        inset 0 -10px 20px rgba(179, 136, 0, 0.4),
+        inset 0 10px 20px rgba(255, 255, 255, 0.3);
+    border: 12px solid #FF8F00;
+    transition: all 0.1s ease;
+    user-select: none;
+}
+
+.cheese-circle:active {
+    transform: scale(0.95);
+    box-shadow: 
+        0 5px 15px rgba(255, 179, 0, 0.4),
+        inset 0 -5px 10px rgba(179, 136, 0, 0.3);
+}
+
+/* Дырки в сыре */
+.cheese-hole {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background: #FF8F00;
+    border-radius: 50%;
+    top: 40%;
+    left: 30%;
+    box-shadow: inset 0 5px 10px rgba(140, 80, 0, 0.5);
+}
+
+.hole-2 {
+    top: 60%;
+    left: 60%;
+    width: 40px;
+    height: 40px;
+}
+
+.hole-3 {
+    top: 25%;
+    left: 65%;
+    width: 35px;
+    height: 35px;
+}
+
+.cheese-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #5D4037;
+    text-align: center;
+}
+
+.cheese-label {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.cheese-power {
+    display: block;
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #E65100;
+    text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Статистика */
+.stats-box {
+    display: flex;
+    justify-content: space-around;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin: 30px 0;
+    box-shadow: 0 8px 16px rgba(255, 152, 0, 0.2);
+    border: 3px solid #FFB74D;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.stat-item i {
+    font-size: 2rem;
+    color: #FF9800;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #8D6E63;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #5D4037;
+}
+
+/* Кнопки улучшений */
+.upgrades {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.upgrade-btn {
+    background: linear-gradient(to right, #FFA726, #FB8C00);
+    color: white;
+    border: none;
+    padding: 18px;
+    border-radius: 12px;
+    font-family: 'Comic Neue', cursive;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 6px 0 #EF6C00;
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.upgrade-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 9px 0 #EF6C00;
+}
+
+.upgrade-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 3px 0 #EF6C00;
+}
+
+.upgrade-btn:disabled {
+    background: #BDBDBD;
+    box-shadow: 0 6px 0 #757575;
+    cursor: not-allowed;
+}
+
+.upgrade-btn i {
+    font-size: 1.5rem;
+    margin-right: 10px;
+}
+
+.upgrade-btn .cost {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 1rem;
+}
+
+/* Уведомления */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #4CAF50;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-weight: bold;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transform: translateX(100px);
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Адаптивность */
+@media (max-width: 600px) {
+    .cheese-circle {
+        width: 220px;
+        height: 220px;
+    }
+    
+    .cheese-label {
+        font-size: 1.5rem;
+    }
+    
+    .cheese-power {
+        font-size: 1.8rem;
+    }
+    
+    .stats-box {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .cheese-header h1 {
+        font-size: 2rem;
+    }
+}

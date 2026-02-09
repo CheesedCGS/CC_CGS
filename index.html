@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сырный Кликер 🧀</title>
+    <!-- Подключаем Telegram SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Подключаем Google Fonts для веселых шрифтов -->
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Сырный заголовок -->
+        <header class="cheese-header">
+            <h1><i class="fas fa-cheese"></i> СЫРНЫЙ КЛИКЕР</h1>
+            <p class="subtitle">Нажимай на сыр, зарабатывай сырки!</p>
+        </header>
+
+        <!-- Основной игровой блок -->
+        <main class="game-area">
+            <!-- Круглый сырный кликер -->
+            <div class="cheese-circle" id="cheeseButton">
+                <div class="cheese-hole"></div>
+                <div class="cheese-hole hole-2"></div>
+                <div class="cheese-hole hole-3"></div>
+                <div class="cheese-text">
+                    <span class="cheese-label">КЛИКНИ</span>
+                    <span class="cheese-power">+<span id="powerValue">1</span></span>
+                </div>
+            </div>
+
+            <!-- Статистика -->
+            <div class="stats-box">
+                <div class="stat-item">
+                    <i class="fas fa-coins"></i>
+                    <div>
+                        <p class="stat-label">Сырки</p>
+                        <p class="stat-value" id="cheeseCount">0</p>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-bolt"></i>
+                    <div>
+                        <p class="stat-label">Сила клика</p>
+                        <p class="stat-value" id="clickPower">1</p>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-trophy"></i>
+                    <div>
+                        <p class="stat-label">Уровень</p>
+                        <p class="stat-value" id="playerLevel">1</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Кнопки улучшений -->
+            <div class="upgrades">
+                <button class="upgrade-btn" id="upgradePower">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>Улучшить сыр (+1 сила)</span>
+                    <span class="cost" id="powerCost">10 сырков</span>
+                </button>
+                
+                <button class="upgrade-btn" id="upgradeAuto">
+                    <i class="fas fa-robot"></i>
+                    <span>Купить мышку (автоклик)</span>
+                    <span class="cost" id="autoCost">50 сырков</span>
+                </button>
+            </div>
+        </main>
+
+        <!-- Уведомления -->
+        <div class="notification" id="notification">
+            <span id="notificationText">+1 сырок!</span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
